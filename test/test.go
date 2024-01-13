@@ -2,15 +2,12 @@ package main
 
 import (
 	"context"
-	"io"
 	"net/http"
-	"os"
 
-	swagger "github.com/davidebianchi/gswagger"
-	oasFiber "github.com/davidebianchi/gswagger/support/fiber"
+	swagger "github.com/Danny-Dasilva/Swagger-Router"
+	oasFiber "github.com/Danny-Dasilva/Swagger-Router/support/fiber"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
-	"github.com/stretchr/testify/require"
 )
 
 type SwaggerRouter = swagger.Router[oasFiber.HandlerFunc, oasFiber.Route]
