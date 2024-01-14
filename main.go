@@ -4,8 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
+
+	"bytes"
+	"encoding/json"
+	"html/template"
 
 	"github.com/davidebianchi/gswagger/apirouter"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -21,7 +26,7 @@ var (
 
 const (
 	// DefaultJSONDocumentationPath is the path of the swagger documentation in json format.
-	DefaultJSONDocumentationPath = "/documentation/json"
+	DefaultJSONDocumentationPath = "/docs/json"
 	// DefaultYAMLDocumentationPath is the path of the swagger documentation in yaml format.
 	DefaultYAMLDocumentationPath = "/documentation/yaml"
 	defaultOpenapiVersion        = "3.0.0"
@@ -43,7 +48,7 @@ type Router[HandlerFunc, Route any] struct {
 type Options struct {
 	Context context.Context
 	Openapi *openapi3.T
-	// JSONDocumentationPath is the path exposed by json endpoint. Default to /documentation/json.
+	// JSONDocumentationPath is the path exposed by json endpoint. Default to /docs/json.
 	JSONDocumentationPath string
 	// YAMLDocumentationPath is the path exposed by yaml endpoint. Default to /documentation/yaml.
 	YAMLDocumentationPath string
@@ -128,8 +133,7 @@ func generateNewValidOpenapi(swagger *openapi3.T) (*openapi3.T, error) {
 	return swagger, nil
 }
 
-// GenerateAndExposeOpenapi creates a /documentation/json route on router and
-// expose the generated swagger
+// GenerateAndExposeOpenapi creates a /docs/json route on router and
 func (r Router[_, _]) GenerateAndExposeOpenapi() error {
 	if err := r.swaggerSchema.Validate(r.context); err != nil {
 		return fmt.Errorf("%w: %s", ErrValidatingSwagger, err)
@@ -139,15 +143,52 @@ func (r Router[_, _]) GenerateAndExposeOpenapi() error {
 	if err != nil {
 		return fmt.Errorf("%w json marshal: %s", ErrGenerateSwagger, err)
 	}
-	r.router.AddRoute(http.MethodGet, r.jsonDocumentationPath, r.router.SwaggerHandler("application/json", jsonSwagger))
 
+	// Convert JSON swagger to YAML
 	yamlSwagger, err := yaml.JSONToYAML(jsonSwagger)
 	if err != nil {
 		return fmt.Errorf("%w yaml marshal: %s", ErrGenerateSwagger, err)
 	}
+
+	// Render HTML using the modified renderHTMLTemplate function
+	htmlTemplate, err := renderHTMLTemplate(jsonSwagger)
+	if err != nil {
+		return fmt.Errorf("failed to render HTML: %s", err)
+	}
+
+	// Add route for serving HTML
+	r.router.AddRoute(http.MethodGet, "/docs/html", r.router.SwaggerHandler("text/html", []byte(htmlTemplate)))
+	r.router.AddRoute(http.MethodGet, "/docs/*", r.router.SwaggerHandler("/documentation", jsonSwagger))
+
+	// Add routes for JSON and YAML as before
+	r.router.AddRoute(http.MethodGet, r.jsonDocumentationPath, r.router.SwaggerHandler("application/json", jsonSwagger))
 	r.router.AddRoute(http.MethodGet, r.yamlDocumentationPath, r.router.SwaggerHandler("text/plain", yamlSwagger))
 
 	return nil
+}
+
+// renderHTMLTemplate is a placeholder for your HTML rendering logic using the provided YAML swagger
+func renderHTMLTemplate(jsonSwagger []byte) (string, error) {
+	// Parse the Swagger JSON into a map
+	var swaggerData map[string]interface{}
+	if err := json.Unmarshal(jsonSwagger, &swaggerData); err != nil {
+		return "", fmt.Errorf("failed to parse Swagger JSON: %w", err)
+	}
+
+	// Parse the indexTmpl into a template
+	tmpl, err := template.New("swagger_template").Parse(indexTmpl)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	// Render the template with the Swagger data
+	var renderedHTML bytes.Buffer
+	if err := tmpl.Execute(&renderedHTML, swaggerData); err != nil {
+		return "", fmt.Errorf("failed to render HTML: %w", err)
+	}
+	log.Println("renderedHTML: " + renderedHTML.String())
+
+	return renderedHTML.String(), nil
 }
 
 func isValidDocumentationPath(path string) error {

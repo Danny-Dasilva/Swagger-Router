@@ -1,0 +1,281 @@
+basePath: /
+definitions:
+  storage.ShopifyStore:
+    properties:
+      access_token:
+        type: string
+      address1:
+        type: string
+      checkout_api_supported:
+        type: boolean
+      city:
+        type: string
+      country:
+        type: string
+      country_code:
+        type: string
+      country_name:
+        type: string
+      county_taxes:
+        type: boolean
+      created_at:
+        type: string
+      currency:
+        type: string
+      customer_email:
+        type: string
+      domain:
+        type: string
+      eligible_for_payments:
+        type: boolean
+      email:
+        type: string
+      enabled_presentment_currencies:
+        items:
+          type: string
+        type: array
+      finances:
+        type: boolean
+      has_storefront:
+        type: boolean
+      iana_timezone:
+        type: string
+      id:
+        type: integer
+      marketing_sms_consent_enabled_at_checkout:
+        type: boolean
+      money_format:
+        type: string
+      money_in_emails_format:
+        type: string
+      money_with_currency_format:
+        type: string
+      money_with_currency_in_emails_format:
+        type: string
+      multi_location_enabled:
+        type: boolean
+      myshopify_domain:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      plan_name:
+        type: string
+      pre_launch_enabled:
+        type: boolean
+      province:
+        type: string
+      province_code:
+        type: string
+      shop_owner:
+        type: string
+      source:
+        type: string
+      tax_shipping:
+        type: boolean
+      taxes_included:
+        type: boolean
+      timezone:
+        type: string
+      transactional_sms_disabled:
+        type: boolean
+      updated_at:
+        type: string
+      weight_unit:
+        type: string
+      zip:
+        type: string
+    type: object
+host: shipsentry-dev-k7qptveiwa-ue.a.run.app
+info:
+  contact:
+    email: fiber@swagger.io
+    name: API Support
+  description: These are the routes for ShipSentry
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Fiber Example API
+  version: "1.0"
+paths:
+  /get_user:
+    get:
+      consumes:
+      - application/json
+      description: get user by id
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Get user by id
+      tags:
+      - help
+  /hello:
+    get:
+      consumes:
+      - application/json
+      description: get route
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: Show a Route
+      tags:
+      - help
+  /shopify/{shopId}/store:
+    get:
+      consumes:
+      - application/json
+      description: Gets the store information from the datastore
+      parameters:
+      - description: Shop ID
+        in: path
+        name: shopId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Store information retrieved successfully
+          schema:
+            $ref: '#/definitions/storage.ShopifyStore'
+        "400":
+          description: Failed to get store information
+          schema:
+            type: string
+      summary: Get Store Information
+      tags:
+      - shopify
+  /shopify/{shopId}/sync/orders:
+    post:
+      consumes:
+      - application/json
+      description: Syncs the store orders from Shopify
+      parameters:
+      - description: Shop ID
+        in: path
+        name: shopId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Store orders synced successfully
+          schema:
+            type: string
+        "400":
+          description: Failed to sync store orders
+          schema:
+            type: string
+      summary: Sync Store Orders
+      tags:
+      - shopify
+  /shopify/{shopId}/sync/store:
+    post:
+      consumes:
+      - application/json
+      description: Syncs the store information from Shopify
+      parameters:
+      - description: Shop ID
+        in: path
+        name: shopId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Store information synced successfully
+          schema:
+            type: string
+        "400":
+          description: Failed to sync store information
+          schema:
+            type: string
+      summary: Sync Store Information
+      tags:
+      - shopify
+  /shopify/handle_callback:
+    get:
+      consumes:
+      - application/json
+      description: Handles the callback from OAuth authentication process
+      parameters:
+      - description: Authorization Code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: Shop Name
+        in: query
+        name: shop
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Authorized with token
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: OAuth Callback Handler
+      tags:
+      - authentication
+  /shopify/start_oauth:
+    get:
+      consumes:
+      - application/json
+      description: Initiates the OAuth process by redirecting to the authentication
+        URL
+      parameters:
+      - description: Shop Name
+        in: query
+        name: shop
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Redirect to authentication URL
+          schema:
+            type: string
+      summary: Start OAuth process
+      tags:
+      - authentication
+  /shopify/stores:
+    get:
+      consumes:
+      - application/json
+      description: Lists all the stores from the datastore
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Stores retrieved successfully
+          schema:
+            items:
+              $ref: '#/definitions/storage.ShopifyStore'
+            type: array
+        "400":
+          description: Failed to get stores
+          schema:
+            type: string
+      summary: List all Stores
+      tags:
+      - shopify
+swagger: "2.0"
